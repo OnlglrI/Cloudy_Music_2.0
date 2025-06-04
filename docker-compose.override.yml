@@ -1,0 +1,15 @@
+services:
+  auth:
+    volumes:
+      - ./auth:/app
+      - /app/node_modules
+
+  user:
+    volumes:
+      - ./user:/app
+      - /app/node_modules
+
+  music:
+    volumes:
+      - ./music:/app
+      - /app/node_modules

@@ -1,0 +1,180 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  postgres:
+    image: postgres:16
+    container_name: postgres
+    restart: always
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server --console-address ":9001" /data
+    ports:
+      - "${MINIO_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "${ELASTICSEARCH_PORT}:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana.ini:/etc/grafana/grafana.ini
+
+  api-gateway:
+    image: nginx:latest
+    container_name: api-gateway
+    ports:
+      - "${NGINX_PORT}:80"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+
+  celery-beat:
+    build: ./analytics
+    container_name: celery-beat
+    command: celery -A analytics beat -l info
+    depends_on:
+      - rabbitmq
+      - redis
+
+  auth:
+    build:
+      context: ./auth
+      args:
+        NODE_ENV: ${NODE_ENV}
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      DB_USER: ${AUTH_DB_USER}
+      DB_PASS: ${AUTH_DB_PASS}
+      DB_NAME: ${POSTGRES_DB}
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+      MINIO_ENDPOINT: minio
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "${AUTH_PORT}:3000"
+
+  user:
+    build:
+      context: ./user
+      args:
+        NODE_ENV: ${NODE_ENV}
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      DB_USER: ${USER_DB_USER}
+      DB_PASS: ${USER_DB_PASS}
+      DB_NAME: ${POSTGRES_DB}
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+      MINIO_ENDPOINT: minio
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "${USER_PORT}:3000"
+
+  music:
+    build:
+      context: ./music
+      args:
+        NODE_ENV: ${NODE_ENV}
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      DB_USER: ${MUSIC_DB_USER}
+      DB_PASS: ${MUSIC_DB_PASS}
+      DB_NAME: ${POSTGRES_DB}
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+      MINIO_ENDPOINT: minio
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MUSIC_PORT}:3000"
+
+  search:
+    build: ./search
+    container_name: search
+    depends_on:
+      - elasticsearch
+      - redis
+
+  analytics:
+    build: ./analytics
+    container_name: analytics
+    depends_on:
+      - minio
+      - rabbitmq
+      - redis
+
+volumes:
+  redis_data:
+  rabbitmq_data:
+  postgres_data:
+  minio_data:
+  es_data:
+  grafana_data:
+
+networks:
+  monitoring:
+  events:
+  analytics:
+  api-gateway:
+  databse:

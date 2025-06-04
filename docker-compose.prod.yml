@@ -1,0 +1,12 @@
+services:
+  auth:
+    environment:
+      NODE_ENV: production
+
+  user:
+    environment:
+      NODE_ENV: production
+
+  music:
+    environment:
+      NODE_ENV: production
