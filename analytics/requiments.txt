@@ -1,9 +1,0 @@
-celery
-redis
-pandas
-psycopg2-binary
-requests
-faker
-prometheus_client
-fastapi
-uvicorn

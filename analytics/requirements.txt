@@ -1,0 +1,12 @@
+requests
+faker
+prometheus_client
+fastapi
+uvicorn
+aio_pika
+minio
+celery[redis,rabbitmq]==5.3.6
+aio-pika==9.4.1  # если ты используешь асинхронный RabbitMQ-клиент
+pandas==2.2.2
+python-dotenv==1.0.1  # если используешь .env файл
+minio==7.2.4  # клиент для MinIO

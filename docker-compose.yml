@@ -55,6 +55,7 @@ services:
   minio:
     image: minio/minio
     container_name: minio
+    hostname: minio
     ports:
       - "${MINIO_PORT}:9000"
       - "${MINIO_CONSOLE_PORT}:9001"
@@ -259,13 +260,33 @@ services:
     ports:
       - "8010:8000"
 
-  analytics:
+  analytics-celery:
     build: ./analytics
-    container_name: analytics
+    container_name: analytics_celery
+    env_file:
+      - .env
+    volumes:
+      - ./analytics:/app
     depends_on:
-      - minio
       - rabbitmq
-      - redis
+      - minio
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbit:5672//
+    command: >
+      celery -A celery_app worker --loglevel=info
+
+  analytics-beat:
+    build: ./analytics
+    container_name: analytics-beat
+    volumes:
+      - ./analytics:/app
+    depends_on:
+      - rabbitmq
+    environment:
+      - CELERY_BROKER_URL=amqp://guest:guest@rabbit:5672//
+    command: >
+      celery -A celery_app beat --loglevel=info
+
 
 volumes:
   redis_data:
