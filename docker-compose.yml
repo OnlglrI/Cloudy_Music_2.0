@@ -4,6 +4,7 @@ services:
   redis:
     image: redis:7
     container_name: redis
+    hostname: ${REDIS_HOST}
     ports:
       - "${REDIS_PORT}:6379"
     volumes:
@@ -21,9 +22,20 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
+  rabbit-init:
+    build: ./rabbit
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+    restart: "no"
+
   postgres:
     image: postgres:16
     container_name: postgres
+    hostname: ${POSTGRES_HOST}
     restart: always
     ports:
       - "${POSTGRES_PORT}:5432"
@@ -34,11 +46,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   minio:
     image: minio/minio
     container_name: minio
-    command: server --console-address ":9001" /data
     ports:
       - "${MINIO_PORT}:9000"
       - "${MINIO_CONSOLE_PORT}:9001"
@@ -47,17 +63,47 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     volumes:
       - minio_data:/data
+    command: server /data --console-address ":9001"
+
+  minio-init:
+    image: minio/mc
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+        sleep 5;
+        mc alias set myminio http://minio:9000 minioadmin minioadmin;
+        mc mb -p myminio/musics;
+        mc mb -p myminio/image;
+        mc mb -p myminio/analytics;
+        echo 'Buckets created';
+        exit 0;
+      "
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
     container_name: elasticsearch
     environment:
-      - discovery.type=single-node
-      - xpack.security.enabled=false
+      discovery.type: single-node
+      xpack.security.enabled: true
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
     ports:
       - "${ELASTICSEARCH_PORT}:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
+
+  es-init:
+    image: curlimages/curl:latest
+    depends_on:
+      - elasticsearch
+    entrypoint: >
+      sh -c "
+        sleep 10;
+        curl -u elastic:admin -X PUT http://elasticsearch:9200/songs -H 'Content-Type: application/json' -d @/config/songs-index.json
+        echo 'Index created';
+      "
+    volumes:
+      - ./config:/config:ro
 
   prometheus:
     image: prom/prometheus
@@ -76,13 +122,49 @@ services:
       - grafana_data:/var/lib/grafana
       - ./config/grafana.ini:/etc/grafana/grafana.ini
 
-  api-gateway:
-    image: nginx:latest
-    container_name: api-gateway
+
+  kong-migrations:
+    build:
+      context: .
+      dockerfile: kong/Dockerfile.kong
+    container_name: kong-migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: /bin/sh
+    command: -c "/wait-for-it.sh ${KONG_PG_HOST}:${KONG_PG_PORT} -- kong migrations bootstrap"
+    environment:
+      KONG_DATABASE: ${KONG_DATABASE}
+      KONG_PG_HOST: ${POSTGRES_HOST}
+      KONG_PG_USER: ${KONG_PG_USER}
+      KONG_PG_PORT: ${POSTGRES_PORT}
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD}
+
+  kong:
+    image: kong:3.6
+    container_name: kong
+    depends_on:
+      kong-migrations:
+        condition: service_completed_successfully
+    restart: on-failure
     ports:
-      - "${NGINX_PORT}:80"
-    volumes:
-      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - "8000:8000"
+      - "8443:8443"
+      - "8001:8001"
+      - "8444:8444"
+    environment:
+      KONG_DATABASE: ${KONG_DATABASE}
+      KONG_PG_HOST: ${POSTGRES_HOST}
+      KONG_PG_PORT: ${POSTGRES_PORT}
+      KONG_PG_USER: ${KONG_PG_USER}
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD}
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001, 0.0.0.0:8444 ssl"
+
+
 
   celery-beat:
     build: ./analytics
@@ -152,9 +234,30 @@ services:
   search:
     build: ./search
     container_name: search
+    hostname: search
     depends_on:
       - elasticsearch
       - redis
+    volumes:
+      - ./search:/app
+    ports:
+      - "8005:8000"
+    env_file:
+      - .env
+
+  playlist:
+    build: ./playlist
+    container_name: playlist
+    hostname: playlist
+    env_file:
+      - .env
+    depends_on:
+      - elasticsearch
+      - redis
+    volumes:
+      - ./playlist:/app
+    ports:
+      - "8010:8000"
 
   analytics:
     build: ./analytics

@@ -1,0 +1,11 @@
+elasticsearch>=8.0.0,<9.0.0
+elastic-transport>=8.0.0,<9.0.0      # Клиент для Elasticsearch
+fastapi                      # Веб-фреймворк (можно заменить на FastAPI, если нужно)
+uvicorn[standard]
+psycopg2-binary              # PostgreSQL клиент
+pika                         # Работа с RabbitMQ (AMQP протокол)
+minio                        # Клиент для MinIO (совместим с S3)
+redis                        # Если нужно кэшировать/работать с Redis.
+uvicorn
+aiohttp
+aio-pika

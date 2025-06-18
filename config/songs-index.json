@@ -1,0 +1,29 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "fuzzy_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": ["lowercase"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "title": {
+        "type": "text",
+        "analyzer": "fuzzy_analyzer"
+      },
+      "artist": {
+        "type": "text",
+        "analyzer": "fuzzy_analyzer"
+      },
+      "album": {
+        "type": "text",
+        "analyzer": "fuzzy_analyzer"
+      }
+    }
+  }
+}
