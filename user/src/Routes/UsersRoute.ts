@@ -1,6 +1,6 @@
 import express, {Request, Response} from 'express';
 import {UsersService} from "../domain/UsersService";
-import {validateForCodeInputMiddleware, validateUserInputMiddleware} from "../middlewares/UserInputMiddleware";
+import {validateForCodeInputMiddleware, validateUserRegInputMiddleware} from "../middlewares/UserRegInputMiddleware";
 import {inputValidationMiddleware} from "../middlewares/ErorrsMiddleware";
 
 
@@ -10,7 +10,7 @@ import {inputValidationMiddleware} from "../middlewares/ErorrsMiddleware";
 export const UsersRoute = () => {
     const router = express.Router();
 
-    router.post('/reg',validateUserInputMiddleware, inputValidationMiddleware, async (req:Request, res:Response) => {
+    router.post('/reg',validateUserRegInputMiddleware, inputValidationMiddleware, async (req:Request, res:Response) => {
         const createdUser = await UsersService.createUser(req.body.username, req.body.password, req.body.email, req.body.code);
 
         if (!createdUser){

@@ -1,6 +1,9 @@
-import express from "express";
+import express, {Request, Response} from "express";
 import {pool} from './application/PosgresConnect'
 import {UsersRoute} from "./Routes/UsersRoute";
+import {AuthRoute} from "./Routes/AuthRoute";
+import {inputUserMiddleware} from "./middlewares/UserLoginInpustMiddleware";
+import {inputValidationMiddleware} from "./middlewares/ErorrsMiddleware";
 
 
 
@@ -8,11 +11,17 @@ const app = express();
 app.use(express.json());
 
 
-app.get("/", (req: express.Request, res: express.Response) => {
+app.get("/", (req:Request, res:Response) => {
     res.send("Hello!!!!sss!!!1");
 })
 
 app.use('/api/users', UsersRoute());
+
+app.use('/api/auth', AuthRoute());
+
+app.get('/api/login',inputUserMiddleware, inputValidationMiddleware, (req: Request, res:Response) => {
+    res.status(200).send("verify");
+} )
 
 
 const PORT = Number(process.env.PORT) || 8080;

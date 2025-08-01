@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import {UsersRepository} from "../repositories/UsersRepository";
-import {AuthRepository} from "../repositories/AuthRepository";
+
 import nodemailer from "nodemailer";
+import {UserType} from "../types";
 
 const transporter = nodemailer.createTransport({
     service: "Gmail",
@@ -26,10 +27,10 @@ export const UsersService = {
             return false;
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const passhash = await this.generateHash(password, salt);
 
-        const createdUser = await UsersRepository.CreateUser(username, email, passhash, salt);
+        const passhash = await this.generateHash(password);
+
+        const createdUser = await UsersRepository.CreateUser(username, email, passhash);
 
         if (createdUser === 1) {
             return true;
@@ -38,7 +39,8 @@ export const UsersService = {
         }
 
     },
-    async generateHash(password:string, salt:string) {
+    async generateHash(password:string) {
+        const salt = await bcrypt.genSalt(10);
         const hash = await bcrypt.hash(password, salt);
         return hash;
     },
@@ -59,4 +61,10 @@ export const UsersService = {
         }
         return false;
     },
+
+    async FindUserByEmail(email: string): Promise<UserType> {
+        const user = await UsersRepository.FindUserByEmail(email);
+
+        return user;
+    }
 }

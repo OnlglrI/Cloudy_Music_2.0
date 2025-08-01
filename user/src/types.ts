@@ -13,7 +13,18 @@ export type UserType = {
         username: string;
         email: string;
         password: string;
-        salt: string;
+        created_at: string;
+}
+
+
+
+export type refreshType = {
+        id: number;
+        user_id: number;
+        token: string;
+        user_agent: string;
+        ip_address: string;
+        expires_at: string;
         created_at: string;
 }
 

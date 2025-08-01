@@ -7,11 +7,11 @@ import redis from "../application/RedisCacheConnection";
 
 
 export const UsersRepository = {
-    async CreateUser(username:string, email:string, password:string, salt:string,):Promise<number> {
+    async CreateUser(username:string, email:string, password:string):Promise<number> {
 
         const result = await pool.query(
-            'INSERT INTO users (username, email, password, salt) VALUES ($1, $2, $3, $4 )',
-            [username, email, password, salt]
+            'INSERT INTO users (username, email, password) VALUES ($1, $2, $3 )',
+            [username, email, password]
         );
 
         const userCreated = result.rowCount || 0
