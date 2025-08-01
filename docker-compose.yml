@@ -37,6 +37,8 @@ services:
     container_name: postgres
     hostname: ${POSTGRES_HOST}
     restart: always
+    env_file:
+      - .env
     ports:
       - "${POSTGRES_PORT}:5432"
     environment:
@@ -198,6 +200,8 @@ services:
       context: ./user
       args:
         NODE_ENV: ${NODE_ENV}
+    env_file:
+      - .env
     environment:
       NODE_ENV: ${NODE_ENV}
       DB_USER: ${USER_DB_USER}
@@ -210,7 +214,11 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
     ports:
-      - "${USER_PORT}:3000"
+      - "8080:8080"
+    volumes:
+      - ./user:/app
+
+
 
   music:
     build:
@@ -252,7 +260,6 @@ services:
     env_file:
       - .env
     depends_on:
-      - elasticsearch
       - redis
     volumes:
       - ./playlist:/app

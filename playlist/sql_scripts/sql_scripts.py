@@ -5,7 +5,7 @@ from pools.postgres_pool import get_pg_pool
 
 async def add_song_playlist_to_db(event_dict: dict):
     query = """
-        INSERT INTO playlist.playlist_songs ( playlist_id, song_id)
+        INSERT INTO playlist_songs ( playlist_id, song_id)
         VALUES ($1, $2)
     """
     pg_pool = get_pg_pool()
@@ -19,7 +19,7 @@ async def add_song_playlist_to_db(event_dict: dict):
 
 async def add_song_favorites_to_db(event_dict: dict):
     query = """
-        INSERT INTO playlist.favorite_songs ( user_id, song_id)
+        INSERT INTO favorite_songs ( user_id, song_id)
         VALUES ($1, $2)
     """
     pg_pool = get_pg_pool()
@@ -33,7 +33,7 @@ async def add_song_favorites_to_db(event_dict: dict):
 
 async def add_song_dislikes_to_db(event_dict: dict):
     query = """
-        INSERT INTO playlist.disliked_songs ( user_id, song_id)
+        INSERT INTO disliked_songs ( user_id, song_id)
         VALUES ($1, $2)
     """
     pg_pool = get_pg_pool()
@@ -47,7 +47,7 @@ async def add_song_dislikes_to_db(event_dict: dict):
 
 async def update_playlist_to_db(event_dict: dict):
     query = """
-        UPDATE playlist.user_playlist
+        UPDATE user_playlist
         SET playlist_name = $2
         WHERE playlist_id = $1
         AND user_id = $3
@@ -65,7 +65,7 @@ async def update_playlist_to_db(event_dict: dict):
 
 async def delete_playlist_from_db(playlist_id: int):
     query = """
-        DELETE FROM playlist.user_playlist
+        DELETE FROM user_playlist
         WHERE playlist_id = $1
     """
     pg_pool = get_pg_pool()
@@ -76,7 +76,7 @@ async def delete_playlist_from_db(playlist_id: int):
 
 async def save_playlist_to_db(event_dict: dict) -> int:
     query = """
-        INSERT INTO playlist.user_playlist (user_id, playlist_name)
+        INSERT INTO user_playlist (user_id, playlist_name)
         VALUES ($1, $2)
         RETURNING playlist_id
     """
@@ -93,7 +93,7 @@ async def save_playlist_to_db(event_dict: dict) -> int:
 
 async def delete_songs_from_playlist_db(song_id: int, playlist_id: int):
     query = """
-        DELETE FROM playlist.playlist_songs
+        DELETE FROM playlist_songs
         WHERE playlist_id = $1
         AND song_id = $2
     """
@@ -104,7 +104,7 @@ async def delete_songs_from_playlist_db(song_id: int, playlist_id: int):
 
 async def delete_songs_from_favorites_db(song_id: int, user_id: int):
     query = """
-        DELETE FROM playlist.favorite_songs
+        DELETE FROM favorite_songs
         WHERE user_id = $1
         AND song_id = $2
     """
@@ -115,7 +115,7 @@ async def delete_songs_from_favorites_db(song_id: int, user_id: int):
 
 async def delete_songs_from_dislikes_db(song_id: int, user_id: int):
     query = """
-        DELETE FROM playlist.disliked_songs
+        DELETE FROM disliked_songs
         WHERE user_id = $1
         AND song_id = $2
     """

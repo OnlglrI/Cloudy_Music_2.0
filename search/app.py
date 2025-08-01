@@ -40,3 +40,5 @@ async def search_song(text: str):
         # Логируем ошибку и возвращаем исключение с сообщением
         logging.error("Ошибка при поиске: %s", str(e))
         raise HTTPException(status_code=500, detail="Ошибка при поиске песни")
+
+

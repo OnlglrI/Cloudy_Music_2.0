@@ -24,7 +24,7 @@ app.get('/api/login',inputUserMiddleware, inputValidationMiddleware, (req: Reque
 } )
 
 
-const PORT = Number(process.env.PORT) || 8080;
+const PORT = Number(process.env.USER_PORT) || 8080;
 
 
 app.listen(PORT,'0.0.0.0', () => {

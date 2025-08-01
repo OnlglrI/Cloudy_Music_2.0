@@ -2,7 +2,7 @@ from sqlalchemy import Table, Column, Integer, String, DateTime, MetaData, Colum
 from pydantic import BaseModel
 
 
-metadata = MetaData(schema="playlist")
+metadata = MetaData(schema="public")
 
 playlist_table = Table(
     "playlist_songs",

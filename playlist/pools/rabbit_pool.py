@@ -31,4 +31,5 @@ async def publish_event(event: dict, queue_name: str):
         body=json.dumps(event).encode(),
         delivery_mode=aio_pika.DeliveryMode.PERSISTENT  # добавь это
     )
+    logger.info(f"[DEBUG] Exchange is: {exchange} ({type(exchange)}), id={id(exchange)}")
     await exchange.publish(message, routing_key=queue_name)
