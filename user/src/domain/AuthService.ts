@@ -37,15 +37,20 @@ export const AuthService = {
     },
 
     async refreshToken(refreshToken:string, req:Request){
-        const payload = jwt.verify(refreshToken, REFRESH_SECRET) as { userId: string, userEmail: string };
-        const existingToken = await AuthRepository.findValidToken(refreshToken, payload.userId);
-        if (!existingToken) return null;
+        try{
+            const payload = jwt.verify(refreshToken, REFRESH_SECRET) as { userId: string, userEmail: string };
+            const existingToken = await AuthRepository.findValidToken(refreshToken, payload.userId);
+            if (!existingToken) return null;
 
-        // Удалим старый и создадим новый
-        await AuthRepository.deleteToken(refreshToken);
-        const user = await UsersRepository.FindUserByEmail(payload.userEmail);
-        const tokens = await this.generateToken(user, req);
-        return tokens;
+            // Удалим старый и создадим новый
+            await AuthRepository.deleteToken(refreshToken);
+            const user = await UsersRepository.FindUserByEmail(payload.userEmail);
+            const tokens = await this.generateToken(user, req);
+            return tokens;
+        }catch(err){
+            console.error('❌ Refresh token verification failed:', err);
+            return false;
+        }
 
     },
 
@@ -57,16 +62,16 @@ export const AuthService = {
             return null;
         }
     },
-    async verifyRefreshToken(refreshToken:string) {
-        try {
-            const user = jwt.verify(refreshToken, REFRESH_SECRET) as { userId: string };
-            return {userId: user.userId, refreshToken: refreshToken};
-        }catch (e) {
-            return null;
-        }
 
-    }
+    async deleteToken(refreshToken:string) {
+        const deleted = await AuthRepository.deleteToken(refreshToken);
 
+        return deleted;
+    },
 
+    async deleteUserTokens(userId:number) {
+      const deleted = await AuthRepository.deleteTokenForUser(userId);
+      return deleted;
+    },
 
 }

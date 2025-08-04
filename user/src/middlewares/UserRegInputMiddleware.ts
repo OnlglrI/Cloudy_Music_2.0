@@ -33,7 +33,7 @@ export const validateUserRegInputMiddleware = (
 
 
 
-export const validateForCodeInputMiddleware = (
+export const validateEmailInputMiddleware = (
     req: Request,
     res: Response,
     next: NextFunction

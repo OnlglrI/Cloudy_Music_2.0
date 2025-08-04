@@ -25,14 +25,21 @@ export const AuthRepository = {
         return result.rows[0] as refreshType;
     },
     async deleteToken(token: string) {
-        await pool.query(`DELETE FROM refresh_tokens WHERE token = $1`, [token]);
+        const res = await pool.query(`DELETE FROM refresh_tokens WHERE token = $1`, [token]);
+
+        return res.rowCount === 1;
     },
     async deleteExpiredTokens() {
         await pool.query(`DELETE FROM refresh_tokens WHERE expires_at < now()`);
+    },
+
+    async deleteTokenForUser(userId:number) {
+        const res = await pool.query('DELETE FROM refresh_tokens WHERE user_id = $1', [userId]);
+        if (!res.rowCount) {
+            return false;
+        }
+        return res.rowCount >= 1;
     }
-
-
-
 
 
 }
