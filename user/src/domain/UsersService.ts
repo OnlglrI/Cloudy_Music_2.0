@@ -45,7 +45,6 @@ export const UsersService = {
         return hash;
     },
 
-
     async createCode(email: string): Promise<boolean> {
         const code = Math.floor(100000 + Math.random() * 900000).toString(); // 6-значный код
         const CreatedCode = await UsersRepository.CreateCode(email, code);
@@ -71,9 +70,24 @@ export const UsersService = {
         return user;
     },
 
-    async DeleteUserByEmail(email: string): Promise<boolean> {
-        const deletedUser = await UsersRepository.DeleteUser(email);
+    async DeleteUserByEmail(id: number): Promise<boolean> {
+        const deletedUser = await UsersRepository.DeleteUser(id);
 
         return deletedUser;
+    },
+
+    async updateUserPassword(id: number, password: string): Promise<boolean> {
+        const passhash = await this.generateHash(password);
+
+        const updatedUser = await UsersRepository.UpdateUserPassword(id, passhash);
+
+        return updatedUser;
+    },
+
+    async updateUserName(id: number, username: string): Promise<boolean> {
+        const updatedUser = await UsersRepository.UpdateUserUsername(id, username);
+
+        return updatedUser;
     }
+
 }

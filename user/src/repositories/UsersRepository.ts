@@ -56,8 +56,8 @@ export const UsersRepository = {
         return res;
     },
 
-    async DeleteUser(email:string):Promise<boolean> {
-        const res = await pool.query('DELETE FROM users WHERE email = $1', [email]);
+    async DeleteUser(id:number):Promise<boolean> {
+        const res = await pool.query('DELETE FROM users WHERE id = $1', [id]);
 
         if (res.rowCount === 1) {
             return true;
@@ -65,6 +65,20 @@ export const UsersRepository = {
         return false;
         }
     },
+
+    async UpdateUserPassword(id:number, password:string):Promise<boolean> {
+        const res = await pool.query('UPDATE users SET password = $1 WHERE id = $2', [password, id]);
+
+        return res.rowCount === 1;
+    },
+
+    async UpdateUserUsername(id:number, username:string):Promise<boolean> {
+        const res = await pool.query('UPDATE users SET username = $1 WHERE id = $2', [username, id]);
+
+        return res.rowCount === 1;
+    },
+
+
 }
 
 

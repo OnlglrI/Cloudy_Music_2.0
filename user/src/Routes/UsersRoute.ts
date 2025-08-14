@@ -35,11 +35,33 @@ export const UsersRoute = () => {
     });
 
     router.delete('/delete',inputUserMiddleware, inputValidationMiddleware, async (req:Request, res:Response) => {
-        const deleted = await UsersService.DeleteUserByEmail(req.user!.email);
+        const deleted = await UsersService.DeleteUserByEmail(req.user!.id);
 
 
         if (deleted){
             res.status(200).send("User Deleted");
+        }else {
+            res.status(404).send({message:"User Not Found"});
+        }
+
+    });
+
+    router.put('/update/password',inputUserMiddleware, inputValidationMiddleware, async (req:Request, res:Response) => {
+        const updated = await UsersService.updateUserPassword(req.user!.id, req.body.password);
+
+        if (updated){
+            res.status(200).send("Password Updated");
+        }else {
+            res.status(404).send({message:"User Not Found"});
+        }
+
+    });
+
+    router.put('/update/username',inputUserMiddleware, inputValidationMiddleware, async (req:Request, res:Response) => {
+        const updated = await UsersService.updateUserName(req.user!.id, req.body.username);
+
+        if (updated){
+            res.status(200).send("Username Updated");
         }else {
             res.status(404).send({message:"User Not Found"});
         }
