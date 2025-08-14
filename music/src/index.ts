@@ -1,17 +1,15 @@
+import 'dotenv/config';
 import express, {Request, Response} from "express";
-import multer from "multer";
 import GetMusicRouter from "./Routers/MusicRouter";
 
 
 
 export const app = express();
-const upload = multer({ storage: multer.memoryStorage() }); // хранение в памяти
 app.use(express.json());
 
 app.get("/", (req:Request, res:Response) => {
     res.send("Hello world!!!");
 })
-
 
 app.use('/api/music', GetMusicRouter());
 

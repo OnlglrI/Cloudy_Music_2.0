@@ -1,6 +1,7 @@
 import express, {Request, Response} from 'express';
 import multer from "multer";
 import {MusicService} from "../Services/MusicService";
+import { requireAuth } from "../middlewares/AuthMiddleware";
 
 
 const upload = multer({ storage: multer.memoryStorage() }); // хранение в памяти
@@ -13,7 +14,7 @@ const GetMusicRouter = () => {
         res.status(200).send('success');
     })
 
-    router.post('/addMusic',upload.single("audio"), async (req: Request, res: Response) => {
+    router.post('/addMusic', requireAuth(), upload.single("audio"), async (req: Request, res: Response) => {
         if (!req.file) {
             return res.status(400).json({error: "Файл не получен"});
         }
@@ -26,7 +27,7 @@ const GetMusicRouter = () => {
         }
     })
 
-    router.post('/streaming-link/:id([0-9]+)', async (req: Request, res: Response) => {
+    router.post('/streaming-link/:id([0-9]+)', requireAuth(), async (req: Request, res: Response) => {
         const stream = await MusicService.stream(+req.params.id)
 
         if (!stream) {
@@ -47,7 +48,7 @@ const GetMusicRouter = () => {
         }
     })
 
-    router.delete('/delete/:id([0-9]+)', async (req: Request, res: Response) => {
+    router.delete('/delete/:id([0-9]+)', requireAuth(), async (req: Request, res: Response) => {
         const deleted = await MusicService.deleteMusic(+req.params.id)
         if (!deleted) {
             res.status(404).json({massage:'Not found music'});
@@ -57,7 +58,7 @@ const GetMusicRouter = () => {
     })
 
 
-    router.put('/update/:id([0-9]+)', async (req: Request, res: Response) => {
+    router.put('/update/:id([0-9]+)', requireAuth(), async (req: Request, res: Response) => {
         const updated = await MusicService.updateMusic(+req.params.id, req.body.name, req.body.author, req.body.album, req.body.genre );
         if (!updated) {
             res.status(404).json({massage:'Not found music'});
